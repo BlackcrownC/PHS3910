@@ -25,6 +25,12 @@ SoundSpeed = 5640; % [m/s]
 Density = 2240; % [kg/m^3]
 
 
+% Matériaux multiples
+NamesTab = ['verre' 'pin' 'hetre' 'inox' 'berylium' 'pvc' 'plexiglass'];
+SoundSpeedTab = [5300 1000 1000 5800 12900 2400 1700];
+DensityTab = [2530 500 800 7500 1848 1380 1180];
+
+
 %% Changement du pas de temps
 
 % % Optional, if set manually, both must be changed
