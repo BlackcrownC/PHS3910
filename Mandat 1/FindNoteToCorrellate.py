@@ -1,27 +1,12 @@
-import numpy as np
-import sounddevice as sd
 import matplotlib.pyplot as plt
 import RecordMicro
-from scipy.signal import find_peaks
+import PlayNotes
 
-
-# Enregistrer un signal
 recorder = RecordMicro.RecordMicro()
-t, recording = recorder.record()
+playNotes = PlayNotes.PlayNotes()
 
-plt.plot(t, recording)
-plt.xlabel('Temps [s]')
-plt.ylabel('Amplitude')
-plt.show()
-
-# use the normalized version
-
-norm_recording = recorder.normalize(recording)
-
-plt.plot(t, norm_recording)
-plt.xlabel('Temps [s]')
-plt.ylabel('Amplitude')
-plt.show()
-
-recorder.find_highest_peak(t, norm_recording, filename='D')
-
+for name in playNotes.dict_name_pos.keys():
+    print(f"Time to learn note {name}")
+    t, recording = recorder.record()
+    norm_recording = RecordMicro.normalize(recording)
+    recorder.find_highest_peak(t, norm_recording, filename=name)

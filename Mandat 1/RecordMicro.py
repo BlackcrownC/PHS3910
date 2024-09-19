@@ -6,7 +6,10 @@ import sounddevice as sd
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.signal import find_peaks
-from unicodedata import normalize
+
+
+def normalize(recording):
+    return (recording / np.linalg.norm(recording)).flatten()
 
 
 class RecordMicro:
@@ -16,6 +19,8 @@ class RecordMicro:
         self.default = default
         self.devices = sd.query_devices()
         self.time_around_peak = 0.25 # in seconds
+
+        self.select_devices()
 
     def select_devices(self):
         if not self.default:
@@ -32,14 +37,10 @@ class RecordMicro:
         print("Recording with : {} \n".format(self.devices[sd.default.device[0]]['name']))
 
     def record(self):
-        self.select_devices()
         rec = sd.rec(int(self.seconds * self.fs), samplerate=self.fs, channels=1)
         sd.wait()
         t = np.arange(0, self.seconds, 1/self.fs)
         return t, rec
-
-    def normalize(self, recording):
-        return (recording / np.linalg.norm(recording)).flatten()
 
     def find_highest_peak(self, t, recording, filename=''):
         peaks, _ = find_peaks(recording, height=0.025)
@@ -49,6 +50,7 @@ class RecordMicro:
         # plt.plot(t[peaks], recording[peaks], "x")
         # plt.xlabel('Temps [s]')
         # plt.ylabel('Amplitude')
+        # plt.title(f'Peaks {filename}')
         # plt.show()
 
         if len(peaks) > 0:
@@ -59,15 +61,26 @@ class RecordMicro:
             # Prendre seulement 250ms avant et après le pic
             start = max(0, highest_peak - int(self.time_around_peak * self.fs))
             end = min(len(recording), highest_peak + int(self.time_around_peak * self.fs))
-            plt.plot(t[start:end], recording[start:end])
+
+            # plt.plot(t[start:end], recording[start:end])
+            # plt.xlabel('Temps [s]')
+            # plt.ylabel('Amplitude')
+            # plt.title(f'Peak {filename}')
+            # plt.show()
+
+            # just to be sure that the peak is normalized
+            peak_normalized = normalize(recording[start:end])
+
+            plt.plot(t[start:end], peak_normalized)
             plt.xlabel('Temps [s]')
             plt.ylabel('Amplitude')
+            plt.title(f'Peak normalized {filename}')
             plt.show()
 
             if filename != '':
-                np.save(f"correlation/{filename}.npy", recording)
+                np.save(f"correlation/{filename}.npy", peak_normalized)
 
-            return recording[start:end]
+            return peak_normalized
         else:
             print("Aucun pic trouvé")
             return None
