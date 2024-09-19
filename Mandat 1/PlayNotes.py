@@ -1,4 +1,5 @@
 import os
+
 import numpy as np
 import matplotlib.pyplot as plt
 import RecordMicro
@@ -68,6 +69,23 @@ class PlayNotes:
             names_matrix[self.dict_name_pos[name]] = name
         return corr_matrix, names_matrix
 
+    def get_highest_correlation(self, peak):
+        names = []
+        max_corrs = []
+        for filename in self.npy_files:
+            note = np.load(f'correlation/{filename}')
+            name = filename[:-4]  # get the name of the file without the extension
+
+            # Correlate the peak with the note
+            # J'imagine que "same" est le meilleur mode???
+            corr = np.correlate(peak, note, mode='same')
+            max_corr = np.max(corr)
+            names.append(name)
+            max_corrs.append(max_corr)
+        # get the name of the note with the highest correlation
+        highest_correlation = max_corrs.index(max(max_corrs))
+        return names[highest_correlation]
+
     # surement à optimiser pour seulement avoir à le faire une fois
     def create_matrices(self):
         corr_matrix = np.zeros((self.rows, self.cols))
@@ -95,14 +113,14 @@ class PlayNotes:
         plt.show()
 
 
-# Enregistrer un signal et garder le peak
-recorder = RecordMicro.RecordMicro()
-t, recording = recorder.record()
-norm_recording = RecordMicro.normalize(recording)
-peak = recorder.find_highest_peak(t, norm_recording)
-# peak = recorder.find_highest_peak(t, norm_recording, filename='test_to_correl')
-
-
-notesPlayer = PlayNotes()
-corr_matrix, names_matrix = notesPlayer.correlate_peak_with_notes(peak)
-notesPlayer.show_heat_map(corr_matrix, names_matrix)
+# # Enregistrer un signal et garder le peak
+# recorder = RecordMicro.RecordMicro()
+# t, recording = recorder.record()
+# norm_recording = RecordMicro.normalize(recording)
+# peak = recorder.find_highest_peak(t, norm_recording)
+# # peak = recorder.find_highest_peak(t, norm_recording, filename='test_to_correl')
+#
+#
+# notesPlayer = PlayNotes()
+# corr_matrix, names_matrix = notesPlayer.correlate_peak_with_notes(peak)
+# notesPlayer.show_heat_map(corr_matrix, names_matrix)
