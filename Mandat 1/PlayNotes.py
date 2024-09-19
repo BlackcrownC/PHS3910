@@ -113,14 +113,14 @@ class PlayNotes:
         plt.show()
 
 
-# # Enregistrer un signal et garder le peak
-# recorder = RecordMicro.RecordMicro()
-# t, recording = recorder.record()
-# norm_recording = RecordMicro.normalize(recording)
-# peak = recorder.find_highest_peak(t, norm_recording)
-# # peak = recorder.find_highest_peak(t, norm_recording, filename='test_to_correl')
-#
-#
-# notesPlayer = PlayNotes()
-# corr_matrix, names_matrix = notesPlayer.correlate_peak_with_notes(peak)
-# notesPlayer.show_heat_map(corr_matrix, names_matrix)
+# Enregistrer un signal et garder le peak
+recorder = RecordMicro.RecordMicro()
+t, recording = recorder.record()
+norm_recording = RecordMicro.normalize(recording)
+peak = recorder.find_highest_peak(t, norm_recording)
+# peak = recorder.find_highest_peak(t, norm_recording, filename='test_to_correl')
+
+
+notesPlayer = PlayNotes()
+corr_matrix, names_matrix = notesPlayer.correlate_peak_with_notes(peak)
+notesPlayer.show_heat_map(corr_matrix, names_matrix)
