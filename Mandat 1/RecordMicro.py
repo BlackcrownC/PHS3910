@@ -6,6 +6,8 @@ import sounddevice as sd
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.signal import find_peaks
+from unicodedata import normalize
+
 
 class RecordMicro:
     def __init__(self, seconds=5, fs=44100, default=True):
@@ -13,8 +15,7 @@ class RecordMicro:
         self.fs = fs
         self.default = default
         self.devices = sd.query_devices()
-        self.myrecording = None
-        self.time_around_peak = 0.25
+        self.time_around_peak = 0.25 # in seconds
 
     def select_devices(self):
         if not self.default:
@@ -32,34 +33,41 @@ class RecordMicro:
 
     def record(self):
         self.select_devices()
-        self.myrecording = sd.rec(int(self.seconds * self.fs), samplerate=self.fs, channels=1)
+        rec = sd.rec(int(self.seconds * self.fs), samplerate=self.fs, channels=1)
         sd.wait()
         t = np.arange(0, self.seconds, 1/self.fs)
-        return t, self.myrecording
+        return t, rec
 
-    def normalize(self, myrecording):
-        self.myrecording = (myrecording / np.linalg.norm(myrecording)).flatten()
-        return self.myrecording
+    def normalize(self, recording):
+        return (recording / np.linalg.norm(recording)).flatten()
 
-    def find_highest_peak(self, t, myrecording, filename=''):
-        peaks, _ = find_peaks(myrecording, height=0.025)
+    def find_highest_peak(self, t, recording, filename=''):
+        peaks, _ = find_peaks(recording, height=0.025)
+
+        # Show the peaks on graph
+        # plt.plot(t, recording)
+        # plt.plot(t[peaks], recording[peaks], "x")
+        # plt.xlabel('Temps [s]')
+        # plt.ylabel('Amplitude')
+        # plt.show()
+
         if len(peaks) > 0:
-            highest_peak = peaks[np.argmax(myrecording[peaks])]
-            print(f"Le plus haut pic est à l'indice {highest_peak} avec une amplitude de {myrecording[highest_peak]}")
+            highest_peak = peaks[np.argmax(recording[peaks])]
+            print(f"Le plus haut pic est à l'indice {highest_peak} avec une amplitude de {recording[highest_peak]}")
             print(f"Un temps de {self.seconds * highest_peak / len(t)}")
 
             # Prendre seulement 250ms avant et après le pic
             start = max(0, highest_peak - int(self.time_around_peak * self.fs))
-            end = min(len(myrecording), highest_peak + int(self.time_around_peak * self.fs))
-            plt.plot(t[start:end], myrecording[start:end])
+            end = min(len(recording), highest_peak + int(self.time_around_peak * self.fs))
+            plt.plot(t[start:end], recording[start:end])
             plt.xlabel('Temps [s]')
             plt.ylabel('Amplitude')
             plt.show()
 
             if filename != '':
-                np.save(f"correlation/{filename}.npy", myrecording)
+                np.save(f"correlation/{filename}.npy", recording)
 
-            return myrecording[start:end]
+            return recording[start:end]
         else:
             print("Aucun pic trouvé")
             return None

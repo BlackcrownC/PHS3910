@@ -6,20 +6,22 @@ from scipy.signal import find_peaks
 
 
 # Enregistrer un signal
-recorder = RecordMicro.RecordMicro(seconds=5, fs=44100, default=True)
-t, myrecording = recorder.record()
+recorder = RecordMicro.RecordMicro()
+t, recording = recorder.record()
 
-plt.plot(t, myrecording)
+plt.plot(t, recording)
 plt.xlabel('Temps [s]')
 plt.ylabel('Amplitude')
 plt.show()
 
-myrecording = recorder.normalize(myrecording)
+# use the normalized version
 
-plt.plot(t, myrecording)
+norm_recording = recorder.normalize(recording)
+
+plt.plot(t, norm_recording)
 plt.xlabel('Temps [s]')
 plt.ylabel('Amplitude')
 plt.show()
 
-recorder.find_highest_peak(t, myrecording, filename='B')
+recorder.find_highest_peak(t, norm_recording, filename='D')
 
