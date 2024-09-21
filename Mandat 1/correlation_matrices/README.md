@@ -1,1 +1,1 @@
-Folder that contains the .mat files for each of the correlation matrix
+Folder that contains the .mat files for each correlation matrix
