@@ -17,7 +17,7 @@ contrast_uncertainty = df['Contrast uncertainty (mm)']
 plt.figure(figsize=(10, 6))  
 plt.bar(combinations, resolution, yerr=resolution_uncertainty, capsize=5, color='skyblue')
 plt.xticks(rotation=45, ha='right') 
-plt.ylabel('Resolution')  
+plt.ylabel('Resolution (mm)')  
 plt.title('Resolution with uncertainty for different parameter combinations')
 plt.tight_layout()
 plt.show()
