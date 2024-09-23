@@ -8,11 +8,11 @@ import csv
 # Define the mapping for the materials
 mat = {
         'pin' : 'Pin',
-        'plexi' : 'Plexiglass',
+        'plexi' : 'Plexi',
         'pvc' : 'PVC',
 }
 
-folder_path = 'Mandat 1\correlation_matrices'
+folder_path = 'Mandat 1\corr_map_2'
 
 data = [
     ['Combinasion of parameters', 'Mean resolution (mm)', 'Resolution uncertainty (mm)', 'Mean contrast (mm)', 'Contrast uncertainty (mm)'],
@@ -30,27 +30,32 @@ for filename in os.listdir(folder_path):
         contrast_list = []
         resolution_list = []
 
-        # Calculate the metrics
-        for i in range(corr_matrices.shape[2]):
-            corr_mat = corr_matrices[:,:,i]
-            resolution, contrast = get_metrics(corr_mat)
-            print('Done')
-            resolution_list.append(resolution)
-            contrast_list.append(contrast)
-        
-        mean_contrast = np.mean(contrast_list)
-        std_contrast = np.std(contrast_list)
-        contrast_uncertainty = std_contrast / np.sqrt(len(contrast_list))
+        try:
+            # Calculate the metrics
+            for i in range(corr_matrices.shape[2]):
+                corr_mat = corr_matrices[:,:,i]
+                resolution, contrast = get_metrics(corr_mat)
+                print('Done')
+                resolution_list.append(resolution)
+                contrast_list.append(contrast)
+            
+            mean_contrast = np.mean(contrast_list)
+            std_contrast = np.std(contrast_list)
+            contrast_uncertainty = std_contrast / np.sqrt(len(contrast_list))
 
-        mean_resolution = np.mean(resolution_list)
-        std_resolution = np.std(resolution_list)
-        resolution_uncertainty = std_resolution / np.sqrt(len(resolution_list))
+            mean_resolution = np.mean(resolution_list)
+            std_resolution = np.std(resolution_list)
+            resolution_uncertainty = std_resolution / np.sqrt(len(resolution_list))
 
-        mat_name, forme_name, sensor = filename_without_ext.split('_')
+            mat_name, forme_name, sensor = filename_without_ext.split('_')
 
-        data.append([f'{mat[mat_name]}, {forme_name} et position {sensor}', mean_resolution, resolution_uncertainty, mean_contrast, contrast_uncertainty])
-        print('-'*50)
+            data.append([f'{mat[mat_name]}, {forme_name} et position {sensor}', mean_resolution, resolution_uncertainty, mean_contrast, contrast_uncertainty])
+            print('-'*50)
 
+        except Exception as e:
+            print(f'Error processing {filename}: {e}')
+            print('-'*50)
+            
 # Open the file in write mode and write the data
 with open('metrics.csv', mode='w', newline='') as file:
     writer = csv.writer(file)
