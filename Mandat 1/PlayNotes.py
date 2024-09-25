@@ -9,7 +9,7 @@ def get_npy_files(folder='correlation'):
     return [filename for filename in os.listdir(folder) if filename.endswith('.npy')]
 
 def create_dict(number_of_slices, max_x, max_y):
-    letters = ["C4", "C-4", "D4", "D-4", "E4", "F4", "F-4", "G4", "G-4", "A4", "A-4", "B4", "C5"]
+    letters = ["c4", "c-4", "c4", "d-4", "e4", "f4", "f-4", "g4", "g-4", "a4", "a-4", "b4", "c5"]
     dict_name_pos = {}
     length_x = max_x // (len(letters) * number_of_slices)
     last_x_pos = 0
