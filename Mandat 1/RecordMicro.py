@@ -9,6 +9,7 @@ import sounddevice as sd
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.signal import find_peaks
+import os
 
 
 def normalize(recording):
@@ -82,8 +83,10 @@ class RecordMicro:
 
             return peak_normalized
         else:
-            print("Aucun pic trouvé")
-            return None
+            raise Exception("Aucun pic trouvé")
 
-    def save_peak(self, peak, filename):
-        np.save(f"correlation/{filename}.npy", peak)
+    def save_peak(self, peak, dir_name, filename):
+        dir = f"correlation/{dir_name}"
+        # Créer le répertoire s'il n'existe pas déjà
+        os.makedirs(dir, exist_ok=True)
+        np.save(f"{dir}/{filename}.npy", peak)
