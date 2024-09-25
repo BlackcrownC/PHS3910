@@ -1,6 +1,5 @@
 import RecordMicro
-import PlayNotes
-import os
+import PlayNotesV2 as PlayNotes
 
 recorder = RecordMicro.RecordMicro()
 playNotes = PlayNotes.PlayNotes()
@@ -18,7 +17,7 @@ def record_and_save(name, time):
         print(f"Error in record_and_save for {name} time {time}")
         record_and_save(name, time)
 
-for name in playNotes.dict_name_pos.keys():
+for name in playNotes.keys_name:
     print(f"Time to learn note {name}")
 
     for i in range(1, number_of_times + 1):

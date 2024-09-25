@@ -8,25 +8,7 @@ import RecordMicro
 def get_npy_files(folder='correlation'):
     return [filename for filename in os.listdir(folder) if filename.endswith('.npy')]
 
-# def create_dict(number_of_slices, max_x, max_y):
-#     key_names = ["C4", "C-4", "D4", "D-4", "E4", "F4", "F-4", "G4", "G-4", "A4", "A-4", "B4", "C5"]
-#     dict_name_pos = {}
-#     length_x = max_x // (len(key_names) * number_of_slices)
-#     last_x_pos = 0
-#
-#     for j, key_name in enumerate(key_names):
-#         if key_name.__contains__('-'):
-#
-#         for i in range(1, number_of_slices + 1):
-#             if j == 0 and i == 1:
-#                 dict_name_pos[f"{key_name}_{i}"] = ((0, 0),(length_x, max_y))
-#             else:
-#                 dict_name_pos[f"{key_name}_{i}"] = ((last_x_pos + 1, 0),(last_x_pos + length_x, max_y))
-#             last_x_pos += length_x
-#     print(dict_name_pos)
-#     return dict_name_pos
-
-def create_dict(number_of_slices):
+def create_key_name(number_of_slices):
     key_names = ["C4", "C-4", "D4", "D-4", "E4", "F4", "F-4", "G4", "G-4", "A4", "A-4", "B4", "C5"]
     names_sliced = []
 
@@ -36,26 +18,13 @@ def create_dict(number_of_slices):
             break
         for i in range(1, number_of_slices + 1):
             names_sliced.append(f"{key_name}_{i}")
+    return names_sliced
 
 class PlayNotes:
     def __init__(self):
         self._npy_files = None
-        self._rows = None
-        self._cols = None
 
-        self.dict_name_pos = create_dict(2, 304, 100)
-
-    @property
-    def rows(self):  # Find max of dict positions
-        if self._rows is None:
-            self._rows = max([end_pos[0] for start_pos, end_pos in self.dict_name_pos.values()]) + 1
-        return self._rows
-
-    @property
-    def cols(self):  # Find max of dict positions
-        if self._cols is None:
-            self._cols = max([end_pos[1] for start_pos, end_pos in self.dict_name_pos.values()]) + 1
-        return self._cols
+        self.keys_name = create_key_name(2)
 
     @property
     def npy_files(self):
