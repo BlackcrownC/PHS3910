@@ -51,7 +51,7 @@ class Grid:
 
     def fill_grid(self):
         for letter, (start_pos, end_pos) in self.dict_name_pos.items():
-            e = random.random() # Correlation of the note
+            e = random.random() # correlation of the note
             for i in range(start_pos[0], end_pos[0] + 1):
                 for j in range(start_pos[1], end_pos[1] + 1):
                     self.grid[i, j] = e
