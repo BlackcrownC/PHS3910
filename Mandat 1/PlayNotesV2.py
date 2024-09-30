@@ -12,7 +12,9 @@ def get_correlation_dict(folder='correlation'):
     return correlation_dict
 
 def create_key_name(number_of_slices):
-    keys_unsliced = ["C4", "C-4", "D4", "D-4", "E4", "F4", "F-4", "G4", "G-4", "A4", "A-4", "B4", "C5"]
+    #keys_unsliced = ["C4", "C-4", "D4", "D-4", "E4", "F4", "F-4", "G4", "G-4", "A4", "A-4", "B4", "C5"]
+    keys_unsliced = ["E4", "F4", "F-4", "G4", "G-4", "A4", "A-4", "B4", "C5"]
+    
     names_sliced = []
 
     for key_name in keys_unsliced:
@@ -35,15 +37,21 @@ class PlayNotes:
         return self._correlation_dict
 
     def correlate(self, peak):
+        folders = [folder for folder in os.listdir(r'C:\Users\pageo\Documents\PHS3910\correlation')]
         highest_correlation = ("x", 0, None) # (key_name, max_corr, corr)
+        max_per_touch = np.zeros(len(folders))
+        count = 0
         for key_name, tries in self.correlation_dict.items():
             for i, try_ in enumerate(tries):
                 corr = np.correlate(peak, try_, mode='same')
                 max_corr = np.max(corr)
+                if max_per_touch[count] < max_corr:
+                    max_per_touch[count] = max_corr
                 print(f"{key_name} try {i} max correlation: {max_corr}")
                 if highest_correlation[1]<max_corr:
                     highest_correlation = (key_name, max_corr, corr)
-        return highest_correlation
+            count += 1
+        return highest_correlation, max_per_touch
 
 
 if __name__ == '__main__':
@@ -54,5 +62,6 @@ if __name__ == '__main__':
     peak = recorder.find_highest_peak(t, norm_recording)
 
     notesPlayer = PlayNotes()
-    key_name, max_corr, corr = notesPlayer.correlate(peak)
-    print(f"Note played: {key_name} with max correlation: {max_corr}")
+    highest_correlation, max_per_touch = notesPlayer.correlate(peak)
+    np.save('max_per_touch.npy', max_per_touch)
+    print(f"Note played: {highest_correlation[0]} with max correlation: {highest_correlation[1]}")

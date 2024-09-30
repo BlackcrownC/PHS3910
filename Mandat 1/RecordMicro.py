@@ -22,7 +22,7 @@ class RecordMicro:
         self.fs = fs
         self.default = default
         self.devices = sd.query_devices()
-        self.time_around_peak = 0.25 # in seconds
+        self.time_around_peak = 0.4 # in seconds
 
         self.select_devices()
 
@@ -47,7 +47,7 @@ class RecordMicro:
         return t, rec
 
     def find_highest_peak(self, t, recording, filename=''):
-        peaks, _ = find_peaks(recording, height=0.025)
+        peaks, _ = find_peaks(recording, height=0.1)
 
         # Show the peaks on graph
         # plt.plot(t, recording)
@@ -75,10 +75,12 @@ class RecordMicro:
             # just to be sure that the peak is normalized
             peak_normalized = normalize(recording[start:end])
 
-            plt.plot(t[start:end], peak_normalized)
+            #plt.plot(t[start:end], peak_normalized)
+            #plt.plot(t[start:end], recording[start:end])
+            plt.plot(t, recording)
             plt.xlabel('Temps [s]')
             plt.ylabel('Amplitude')
-            plt.title(f'Peak normalized {filename}')
+            plt.title(f'Peak not normalized {filename}')
             plt.show()
 
             return peak_normalized
