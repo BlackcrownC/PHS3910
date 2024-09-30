@@ -1,68 +1,108 @@
 #!/usr/bin/env python3
-"""Pass input directly to output.
+"""Creating an asyncio generator for blocks of audio data.
 
-https://github.com/PortAudio/portaudio/blob/master/test/patest_wire.c
+This example shows how a generator can be used to analyze audio input blocks.
+In addition, it shows how a generator can be created that yields not only input
+blocks but also output blocks where audio data can be written to.
+
+You need Python 3.7 or newer to run this.
 
 """
-import argparse
+import asyncio
+import queue
+import sys
 
+import numpy as np
 import sounddevice as sd
-import numpy  # Make sure NumPy is loaded before it is used in the callback
-assert numpy  # avoid "imported but unused" message (W0611)
 
 
-def int_or_str(text):
-    """Helper function for argument parsing."""
+async def inputstream_generator(channels=1, **kwargs):
+    """Generator that yields blocks of input data as NumPy arrays."""
+    q_in = asyncio.Queue()
+    loop = asyncio.get_event_loop()
+
+    def callback(indata, frame_count, time_info, status):
+        loop.call_soon_threadsafe(q_in.put_nowait, (indata.copy(), status))
+
+    stream = sd.InputStream(callback=callback, channels=channels, **kwargs)
+    with stream:
+        while True:
+            indata, status = await q_in.get()
+            yield indata, status
+
+
+async def stream_generator(blocksize, *, channels=1, dtype='float32',
+                           pre_fill_blocks=10, **kwargs):
+    """Generator that yields blocks of input/output data as NumPy arrays.
+
+    The output blocks are uninitialized and have to be filled with
+    appropriate audio signals.
+
+    """
+    assert blocksize != 0
+    q_in = asyncio.Queue()
+    q_out = queue.Queue()
+    loop = asyncio.get_event_loop()
+
+    def callback(indata, outdata, frame_count, time_info, status):
+        loop.call_soon_threadsafe(q_in.put_nowait, (indata.copy(), status))
+        outdata[:] = q_out.get_nowait()
+
+    # pre-fill output queue
+    for _ in range(pre_fill_blocks):
+        q_out.put(np.zeros((blocksize, channels), dtype=dtype))
+
+    stream = sd.Stream(blocksize=blocksize, callback=callback, dtype=dtype,
+                       channels=channels, **kwargs)
+    with stream:
+        while True:
+            indata, status = await q_in.get()
+            outdata = np.empty((blocksize, channels), dtype=dtype)
+            yield indata, outdata, status
+            q_out.put_nowait(outdata)
+
+
+async def print_input_infos(**kwargs):
+    """Show minimum and maximum value of each incoming audio block."""
+    async for indata, status in inputstream_generator(**kwargs):
+        if status:
+            print(status)
+        print('min:', indata.min(), '\t', 'max:', indata.max())
+
+
+async def wire_coro(**kwargs):
+    """Create a connection between audio inputs and outputs.
+
+    Asynchronously iterates over a stream generator and for each block
+    simply copies the input data into the output block.
+
+    """
+    async for indata, outdata, status in stream_generator(**kwargs):
+        if status:
+            print(status)
+        outdata[:] = indata
+
+
+async def main(**kwargs):
+    print('Some informations about the input signal:')
     try:
-        return int(text)
-    except ValueError:
-        return text
+        await asyncio.wait_for(print_input_infos(), timeout=2)
+    except asyncio.TimeoutError:
+        pass
+    print('\nEnough of that, activating wire ...\n')
+    audio_task = asyncio.create_task(wire_coro(**kwargs))
+    for i in range(10, 0, -1):
+        print(i)
+        await asyncio.sleep(1)
+    audio_task.cancel()
+    try:
+        await audio_task
+    except asyncio.CancelledError:
+        print('\nwire was cancelled')
 
 
-parser = argparse.ArgumentParser(add_help=False)
-parser.add_argument(
-    '-l', '--list-devices', action='store_true',
-    help='show list of audio devices and exit')
-args, remaining = parser.parse_known_args()
-if args.list_devices:
-    print(sd.query_devices())
-    parser.exit(0)
-parser = argparse.ArgumentParser(
-    description=__doc__,
-    formatter_class=argparse.RawDescriptionHelpFormatter,
-    parents=[parser])
-parser.add_argument(
-    '-i', '--input-device', type=int_or_str,
-    help='input device (numeric ID or substring)')
-parser.add_argument(
-    '-o', '--output-device', type=int_or_str,
-    help='output device (numeric ID or substring)')
-parser.add_argument(
-    '-c', '--channels', type=int, default=2,
-    help='number of channels')
-parser.add_argument('--dtype', help='audio data type')
-parser.add_argument('--samplerate', type=float, help='sampling rate')
-parser.add_argument('--blocksize', type=int, help='block size')
-parser.add_argument('--latency', type=float, help='latency in seconds')
-args = parser.parse_args(remaining)
-
-
-def callback(indata, outdata, frames, time, status):
-    if status:
-        print(status)
-    outdata[:] = indata
-
-
-try:
-    with sd.Stream(device=(args.input_device, args.output_device),
-                   samplerate=args.samplerate, blocksize=args.blocksize,
-                   dtype=args.dtype, latency=args.latency,
-                   channels=args.channels, callback=callback):
-        print('#' * 80)
-        print('press Return to quit')
-        print('#' * 80)
-        input()
-except KeyboardInterrupt:
-    parser.exit('')
-except Exception as e:
-    parser.exit(type(e).__name__ + ': ' + str(e))
+if __name__ == "__main__":
+    try:
+        asyncio.run(main(blocksize=1024))
+    except KeyboardInterrupt:
+        sys.exit('\nInterrupted by user')
