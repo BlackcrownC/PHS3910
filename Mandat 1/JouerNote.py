@@ -1,5 +1,3 @@
-import RecordMicro
-import PlayNotesV2 as PlayNotes
 import numpy as np 
 import os
 import pygame
@@ -7,17 +5,18 @@ import pygame
 def jouer_note(note, folder_path) : 
     file_name = None
     if note[1] == '-':
-        file_name = f"{note[0].lower() + note[2]}.wav"
+        file_name = f"{note[0].lower() + '-' + note[2]}.wav"
 
     elif note[2] == '_':
-        file_name = f"{note[0].lower()}.wav"
+        file_name = f"{note[:2].lower()}.wav"
 
     if file_name is None:
         print('wtf')
         return
     
     file_path = os.path.join(folder_path, file_name)
-
+    print(file_name)
+    print(file_path)
     if not os.path.isfile(file_path):
         print(f"Error: The file for note '{note}' does not exist in the folder.")
         return

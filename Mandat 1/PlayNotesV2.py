@@ -5,14 +5,14 @@ import matplotlib.pyplot as plt
 import RecordMicro
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from IPython import embed
-
+from JouerNote import jouer_note
 
 def get_correlation_dict(folder='correlation'):
     correlation_dict = {}
     for key_name in os.listdir(folder):
         for try_ in os.listdir(f"{folder}/{key_name}"):
             number = try_.split('.')[0]
-            correlation_dict[f'{key_name}_{number}'] = np.load(f'{folder}/{key_name}/{try_}') # [np.load(f'{folder}/{key_name}/{filename}', allow_pickle=True) for filename in os.listdir(f"{folder}/{key_name}") if filename.endswith('.npy')]
+            correlation_dict[f'{key_name}_{number}'] = np.load(f'{folder}/{key_name}/{try_}', allow_pickle=True) # [np.load(f'{folder}/{key_name}/{filename}', allow_pickle=True) for filename in os.listdir(f"{folder}/{key_name}") if filename.endswith('.npy')]
     return correlation_dict
 
 def create_key_name(number_of_slices):
@@ -91,8 +91,7 @@ if __name__ == '__main__':
     notesPlayer = PlayNotes()
     max_key, max_corr = notesPlayer.max_correlation_parallel(peak, get_correlation_dict())
     print(f"Note played: {max_key} with correlation of {max_corr}")
+    jouer_note(max_key, 'Wav-Notes')
     # highest_correlation, max_per_touch = notesPlayer.correlate(peak)
     # np.save('max_per_touch.npy', max_per_touch)
     # print(f"Note played: {highest_correlation[0]} with max correlation: {highest_correlation[1]}")
-
-    embed()
