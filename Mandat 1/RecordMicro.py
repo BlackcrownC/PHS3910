@@ -10,10 +10,23 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.signal import find_peaks
 import os
+import soundfile as sf
 
 
 def normalize(recording):
     return (recording / np.linalg.norm(recording)).flatten()
+
+def play_key(key: str):
+    base_path = 'Wav-Notes/'
+    key = key.split('_')[0].lower()
+    path = base_path + key + ".wav"
+    # print(path)
+    # Read the WAV file
+    data, samplerate = sf.read(path)
+
+    # Play the WAV file
+    sd.play(data, samplerate)
+    sd.wait()
 
 
 class RecordMicro:
