@@ -1,5 +1,5 @@
 import RecordMicro
-import PlayNotesV2 as PlayNotes
+import PlayNotes
 from IPython import embed
 
 recorder = RecordMicro.RecordMicro()
