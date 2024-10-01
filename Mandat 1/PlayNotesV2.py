@@ -10,7 +10,9 @@ from IPython import embed
 def get_correlation_dict(folder='correlation'):
     correlation_dict = {}
     for key_name in os.listdir(folder):
-        correlation_dict[key_name] = [np.load(f'{folder}/{key_name}/{filename}', allow_pickle=True) for filename in os.listdir(f"{folder}/{key_name}") if filename.endswith('.npy')]
+        for try_ in os.listdir(f"{folder}/{key_name}"):
+            number = try_.split('.')[0]
+            correlation_dict[f'{key_name}_{number}'] = np.load(f'{folder}/{key_name}/{try_}') # [np.load(f'{folder}/{key_name}/{filename}', allow_pickle=True) for filename in os.listdir(f"{folder}/{key_name}") if filename.endswith('.npy')]
     return correlation_dict
 
 def create_key_name(number_of_slices):
@@ -61,34 +63,34 @@ class PlayNotes:
         return max_key, max_corr  # Return the key and the corresponding maximum correlation
 
 
-    # def correlate(self, peak):
-    #     folders = [folder for folder in os.listdir(r'Correlation')]
-    #     highest_correlation = ("x", 0, None) # (key_name, max_corr, corr)
-    #     max_per_touch = np.zeros(len(folders))
-    #     count = 0
-    #     for key_name, tries in self.correlation_dict.items():
-    #         for i, try_ in enumerate(tries):
-    #             corr = np.correlate(peak, try_, mode='same')
-    #             max_corr = np.max(corr)
-    #             if max_per_touch[count] < max_corr:
-    #                 max_per_touch[count] = max_corr
-    #             print(f"{key_name} try {i} max correlation: {max_corr}")
-    #             if highest_correlation[1]<max_corr:
-    #                 highest_correlation = (key_name, max_corr, corr)
-    #         count += 1
-    #     return highest_correlation, max_per_touch
+    def correlate(self, peak):
+        folders = [folder for folder in os.listdir(r'Correlation')]
+        highest_correlation = ("x", 0, None) # (key_name, max_corr, corr)
+        max_per_touch = np.zeros(len(folders))
+        count = 0
+        for key_name, tries in self.correlation_dict.items():
+            for i, try_ in enumerate(tries):
+                corr = np.correlate(peak, try_, mode='same')
+                max_corr = np.max(corr)
+                if max_per_touch[count] < max_corr:
+                    max_per_touch[count] = max_corr
+                print(f"{key_name} try {i} max correlation: {max_corr}")
+                if highest_correlation[1]<max_corr:
+                    highest_correlation = (key_name, max_corr, corr)
+            count += 1
+        return highest_correlation, max_per_touch
 
 
 if __name__ == '__main__':
-    # Enregistrer un signal et garder le peak
+    #Enregistrer un signal et garder le peak
     recorder = RecordMicro.RecordMicro()
     t, recording = recorder.record()
     norm_recording = RecordMicro.normalize(recording)
     peak = recorder.find_highest_peak(t, norm_recording)
 
-    # notesPlayer = PlayNotes()
-    # max_key, max_corr = notesPlayer.max_correlation_parallel(peak, get_correlation_dict())
-    # print(f"Note played: {max_key} with correlation of {max_corr}")
+    notesPlayer = PlayNotes()
+    max_key, max_corr = notesPlayer.max_correlation_parallel(peak, get_correlation_dict())
+    print(f"Note played: {max_key} with correlation of {max_corr}")
     # highest_correlation, max_per_touch = notesPlayer.correlate(peak)
     # np.save('max_per_touch.npy', max_per_touch)
     # print(f"Note played: {highest_correlation[0]} with max correlation: {highest_correlation[1]}")
