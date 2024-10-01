@@ -65,8 +65,8 @@ async def peak_verification(recording):
     _ = asyncio.create_task(correlate_stash(peak_normalized))
 
 async def correlate_stash(peak):
-    note = playNotes.get_highest_correlation(peak)
-    print(f"La note est {note}")
+    (key_name, max_corr, corr), max_per_touch = playNotes.correlate(peak)
+    print(f"La note est {key_name} avec une corrélation de {max_corr}")
 
 
 try:
