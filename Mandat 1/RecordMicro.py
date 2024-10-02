@@ -30,12 +30,12 @@ def play_key(key: str):
 
 
 class RecordMicro:
-    def __init__(self, seconds=5, fs=44100, default=True):
+    def __init__(self, seconds=0.4, fs=44100/4, default=True):
         self.seconds = seconds
         self.fs = fs
         self.default = default
         self.devices = sd.query_devices()
-        self.time_around_peak = 0.4 # in seconds
+        self.time_around_peak = 0.2 # in seconds
 
         self.select_devices()
 
@@ -60,7 +60,7 @@ class RecordMicro:
         return t, rec
 
     def find_highest_peak(self, t, recording, filename=''):
-        peaks, _ = find_peaks(recording, height=0.1)
+        peaks, _ = find_peaks(recording, height=0.01)
 
         # Show the peaks on graph
         # plt.plot(t, recording)
@@ -90,15 +90,16 @@ class RecordMicro:
 
             #plt.plot(t[start:end], peak_normalized)
             #plt.plot(t[start:end], recording[start:end])
-            plt.plot(t, recording)
-            plt.xlabel('Temps [s]')
-            plt.ylabel('Amplitude')
-            plt.title(f'Peak not normalized {filename}')
-            plt.show()
+            #plt.plot(t, recording)
+            #plt.xlabel('Temps [s]')
+            #plt.ylabel('Amplitude')
+            #plt.title(f'Peak not normalized {filename}')
+            #plt.show()
 
             return peak_normalized
         else:
-            raise Exception("Aucun pic trouvé")
+            #print('Aucun pic trouvé')
+            return None
 
     def save_peak(self, peak, dir_name, filename):
         dir = f"correlation/{dir_name}"

@@ -6,8 +6,11 @@ import RecordMicro
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from IPython import embed
 from JouerNote import jouer_note
+from time import perf_counter
+from scipy.signal import resample
 
-def get_correlation_dict(folder='correlation'):
+correlation_folder = 'correlation_v2'
+def get_correlation_dict(folder='correlation_v2'):
     correlation_dict = {}
     for key_name in os.listdir(folder):
         for try_ in os.listdir(f"{folder}/{key_name}"):
@@ -16,7 +19,7 @@ def get_correlation_dict(folder='correlation'):
     return correlation_dict
 
 def create_key_name(number_of_slices):
-    keys_unsliced = ["C4", "C-4", "D4", "D-4", "E4", "F4", "F-4", "G4", "G-4", "A4", "A-4", "B4", "C5"]
+    keys_unsliced = ["C4", "C-4", "D4", "D-4", "E4", "F4", "F-4", "G4", "G-4", "A5", "A-5", "B5", "C5"]
     names_sliced = []
 
     for key_name in keys_unsliced:
@@ -64,7 +67,7 @@ class PlayNotes:
 
 
     def correlate(self, peak):
-        folders = [folder for folder in os.listdir(r'Correlation')]
+        folders = [folder for folder in os.listdir(correlation_folder)]
         highest_correlation = ("x", 0, None) # (key_name, max_corr, corr)
         max_per_touch = np.zeros(len(folders))
         count = 0
@@ -82,19 +85,14 @@ class PlayNotes:
 
 
 if __name__ == '__main__':
-
+    print('Commencez à jouer')
     while True:
-        print('Commencez a jouer')
         #Enregistrer un signal et garder le peak
         recorder = RecordMicro.RecordMicro()
         t, recording = recorder.record()
-        norm_recording = RecordMicro.normalize(recording)
-        peak = recorder.find_highest_peak(t, norm_recording)
-
-        notesPlayer = PlayNotes()
-        max_key, max_corr = notesPlayer.max_correlation_parallel(peak, get_correlation_dict())
-        print(f"Note played: {max_key} with correlation of {max_corr}")
-        jouer_note(max_key, 'Wav-Notes')
-        # highest_correlation, max_per_touch = notesPlayer.correlate(peak)
-        # np.save('max_per_touch.npy', max_per_touch)
-        # print(f"Note played: {highest_correlation[0]} with max correlation: {highest_correlation[1]}")
+        peak = recorder.find_highest_peak(t, recording.flatten())
+        if peak is not None:
+            notesPlayer = PlayNotes()
+            max_key, max_corr = notesPlayer.max_correlation_parallel(peak, get_correlation_dict())
+            print(f"Note played: {max_key} with correlation of {max_corr}")
+            jouer_note(max_key, 'Wav-Notes')
