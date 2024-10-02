@@ -22,7 +22,7 @@ def create_key_name(number_of_slices):
     for key_name in keys_unsliced:
         if key_name.__contains__('-'):
             names_sliced.append(key_name)
-            break
+            continue
         for i in range(1, number_of_slices + 1):
             names_sliced.append(f"{key_name}_{i}")
     return names_sliced
@@ -83,14 +83,14 @@ class PlayNotes:
 
 if __name__ == '__main__':
     #Enregistrer un signal et garder le peak
-    recorder = RecordMicro.RecordMicro()
-    t, recording = recorder.record()
-    norm_recording = RecordMicro.normalize(recording)
-    peak = recorder.find_highest_peak(t, norm_recording)
+    # recorder = RecordMicro.RecordMicro()
+    # t, recording = recorder.record()
+    # norm_recording = RecordMicro.normalize(recording)
+    # peak = recorder.find_highest_peak(t, norm_recording)
 
-    notesPlayer = PlayNotes()
-    max_key, max_corr = notesPlayer.max_correlation_parallel(peak, get_correlation_dict())
-    print(f"Note played: {max_key} with correlation of {max_corr}")
+    # notesPlayer = PlayNotes()
+    # max_key, max_corr = notesPlayer.max_correlation_parallel(peak, get_correlation_dict())
+    # print(f"Note played: {max_key} with correlation of {max_corr}")
     # highest_correlation, max_per_touch = notesPlayer.correlate(peak)
     # np.save('max_per_touch.npy', max_per_touch)
     # print(f"Note played: {highest_correlation[0]} with max correlation: {highest_correlation[1]}")

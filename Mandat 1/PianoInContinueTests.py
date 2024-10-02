@@ -5,14 +5,13 @@ import sys
 import numpy as np
 import sounddevice as sd
 from collections import deque
-
 from matplotlib import pyplot as plt
 from scipy.signal import find_peaks
 import PlayNotes
 
 fs = 44100
 time_around_peak = 0.25
-peak_height = 0.1
+peak_height = 0.001
 
 reading_length = 4 * int(fs * time_around_peak) # Lire 1 seconde de signal
 saved_length = 2 * reading_length # Garder 2 secondes de signal
@@ -65,8 +64,9 @@ async def peak_verification(recording):
     _ = asyncio.create_task(correlate_stash(peak_normalized))
 
 async def correlate_stash(peak):
-    (key_name, max_corr, corr), max_per_touch = playNotes.correlate(peak)
-    print(f"La note est {key_name} avec une corrélation de {max_corr}")
+    max_key, max_corr = playNotes.max_correlation_parallel(peak, PlayNotes.get_correlation_dict())
+    # (key_name, max_corr, corr), max_per_touch = playNotes.correlate(peak)
+    print(f"La note est {max_key} avec une corrélation de {max_corr}")
 
 
 try:
