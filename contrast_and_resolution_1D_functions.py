@@ -87,7 +87,7 @@ def correlate_two_signals(signal1, signal2):
     max_corr = np.max(correlation)
     return max_corr
 
-def correlate_signal_to_bank(signal, correlation_bank):
+def correlate_signal_to_bank(signal, note, correlation_bank):
     """
     Correlates a given signal with a bank of signals and returns the correlation coefficients.
 
@@ -103,7 +103,15 @@ def correlate_signal_to_bank(signal, correlation_bank):
     for key_name in correlation_bank:
         max_corr = correlate_two_signals(signal, correlation_bank[key_name])
         correlation_coefficients.append((key_name_to_x_position(key_name), max_corr))
-    return correlation_coefficients
+
+    keys = list(correlation_bank.keys())
+    max_note_index = np.argmax(correlation_coefficients)
+
+    max_note = keys[max_note_index]
+
+    is_good_note = bool(max_note == note)
+
+    return correlation_coefficients, is_good_note
 
 def calculate_metrics(correlation_coefficients):
     """
@@ -121,8 +129,8 @@ def calculate_metrics(correlation_coefficients):
                             and the mean of the correlation coefficients that are less than half of the maximum.
     """
 
-    def gaussian(x, amp, mu, sigma, offset):
-        return amp * np.exp(-(x - mu)**2 / (2 * sigma**2)) + offset
+    def gaussian(x, amp, mu, sigma):
+        return amp * np.exp(-(x - mu)**2 / (2 * sigma**2)) + 0.2
     
     x_position, corr_coef = zip(*correlation_coefficients)
     
@@ -130,8 +138,11 @@ def calculate_metrics(correlation_coefficients):
     x_position = np.array(x_position)
     corr_coef = np.array(corr_coef)
 
-    popt, _ = curve_fit(gaussian, x_position, corr_coef, p0=[np.max(corr_coef), 11, 1, 1])
-
+    lower_bounds = (0, 0, 0)
+    upper_bounds = (np.max(corr_coef)-0.2, np.inf, np.inf)
+    popt, _ = curve_fit(gaussian, x_position, corr_coef, p0=[np.max(corr_coef)-0.2, x_position[np.argmax(corr_coef)], 1], bounds=(lower_bounds, upper_bounds))
+    print(x_position[np.argmax(corr_coef)])
+    print(popt)
     FWHM = 2 * np.sqrt(2 * np.log(2)) * popt[2]
 
     maximum_correlation = max(corr_coef)
@@ -144,7 +155,7 @@ def calculate_metrics(correlation_coefficients):
     plt.plot(np.linspace(0, 24, 1000), gaussian(np.linspace(0, 24, 1000), *popt), label='Fitted Gaussian Curve')
     plt.xlabel('Position on the piano keyboard [cm]')
     plt.ylabel('Correlation Coefficient')
-    plt.title('Fitted parameters: amplitude = %.2f, mu = %.2f, sigma = %.2f, offset = %.2f' % tuple(popt))
+    #plt.title('Fitted parameters: amplitude = %.2f, mu = %.2f, sigma = %.2f, offset = %.2f' % tuple(popt))
     plt.legend()
     plt.grid()
     plt.show()
@@ -157,11 +168,12 @@ def main_procedure(correlation_bank, signals):
 
     for signal_name in signals:
         signal = signals[signal_name]
-        correlation_coefficients = correlate_signal_to_bank(signal, correlation_bank)
-        FWHM, contrast = calculate_metrics(correlation_coefficients)
-        resolution_list.append(FWHM)
-        contrast_list.append(contrast)
-
+        correlation_coefficients, is_good_note = correlate_signal_to_bank(signal, signal_name, correlation_bank)
+        if is_good_note:
+            FWHM, contrast = calculate_metrics(correlation_coefficients)
+            resolution_list.append(FWHM)
+            contrast_list.append(contrast)
+        
     mean_resolution = np.mean(resolution_list)
     mean_contrast = np.mean(contrast_list)
 
@@ -251,6 +263,7 @@ def low_pass_filter(signal, cutoff_freq, sampling_rate):
 if __name__ == "__main__":
     correlation_folder_path = 'correlation'
     correlation_bank = create_correlation_bank(correlation_folder_path)
-    signal = np.load('correlation/F4_1/1.npy', allow_pickle=True)
-    correlation_coefficients = correlate_signal_to_bank(signal, correlation_bank)
+    signal = np.load(r'signal_test\E4_1\1.npy', allow_pickle=True)
+    correlation_coefficients, is_good_note = correlate_signal_to_bank(signal,"E4_1", correlation_bank)
+    print(is_good_note)
     calculate_metrics(correlation_coefficients)
