@@ -2,6 +2,7 @@ import numpy as np
 import os
 from matplotlib import pyplot as plt
 from scipy.optimize import curve_fit
+from scipy.stats import skewnorm
 
 def create_correlation_bank(correlation_folder_path):
     """
@@ -34,7 +35,7 @@ def get_signals(signals_folder_path):
     """
     signals = {}
     for try_ in os.listdir(signals_folder_path):
-        signals[f'{try_}'] = np.load(f'{signals_folder_path}/{try_}', allow_pickle=True)
+        signals[f'{try_}'] = np.load(f'{signals_folder_path}/{try_}/1.npy', allow_pickle=True)
     return signals
 
 def key_name_to_x_position(key_name):
@@ -83,7 +84,7 @@ def correlate_two_signals(signal1, signal2):
     Returns:
     float: The maximum value of the cross-correlation between the two signals.
     """
-    correlation = np.correlate(signal1, signal2, 'same')
+    correlation = np.correlate(signal1/ np.linalg.norm(signal1), signal2/ np.linalg.norm(signal2), 'same')
     max_corr = np.max(correlation)
     return max_corr
 
@@ -99,15 +100,15 @@ def correlate_signal_to_bank(signal, note, correlation_bank):
         list of tuples: A list of tuples where each tuple contains the x-position (derived from the key name) 
                         and the maximum correlation coefficient for the corresponding signal in the correlation bank.
     """
-    correlation_coefficients = []
+    correlation_coefficients = {}
     for key_name in correlation_bank:
         max_corr = correlate_two_signals(signal, correlation_bank[key_name])
-        correlation_coefficients.append((key_name_to_x_position(key_name), max_corr))
+        correlation_coefficients[key_name] = max_corr
+        #correlation_coefficients.append((key_name, max_corr))
 
-    keys = list(correlation_bank.keys())
-    max_note_index = np.argmax(correlation_coefficients)
+    max_note = max(correlation_coefficients, key=correlation_coefficients.get)
 
-    max_note = keys[max_note_index]
+    correlation_coefficients = {key_name_to_x_position(key_name): max_corr for key_name, max_corr in correlation_coefficients.items()}
 
     is_good_note = bool(max_note == note)
 
@@ -125,24 +126,30 @@ def calculate_metrics(correlation_coefficients):
     Returns:
     tuple: A tuple containing:
         - FWHM (float): The Full Width at Half Maximum of the fitted Gaussian curve.
-        - contrast (float): The contrast, defined as the difference between the maximum correlation coefficient
                             and the mean of the correlation coefficients that are less than half of the maximum.
     """
 
+
     def gaussian(x, amp, mu, sigma):
-        return amp * np.exp(-(x - mu)**2 / (2 * sigma**2)) + 0.2
-    
-    x_position, corr_coef = zip(*correlation_coefficients)
+        return amp * np.exp(-(x - mu)**2 / (2 * sigma**2))
     
     # make arrays with the x positions and correlation coefficients
-    x_position = np.array(x_position)
-    corr_coef = np.array(corr_coef)
+    x_position = np.array(list(correlation_coefficients.keys()))
+    corr_coef = np.array(list(correlation_coefficients.values()))
+    # calculate contrast
+    maximum_correlation = max(corr_coef)
+    threshold = 0.5 * maximum_correlation
+    noise = corr_coef[corr_coef < threshold]
+    baseline = np.mean(noise)
+    contrast = maximum_correlation - baseline
+
+    corr_coef = corr_coef - baseline
+
 
     lower_bounds = (0, 0, 0)
-    upper_bounds = (np.max(corr_coef)-0.2, np.inf, np.inf)
-    popt, _ = curve_fit(gaussian, x_position, corr_coef, p0=[np.max(corr_coef)-0.2, x_position[np.argmax(corr_coef)], 1], bounds=(lower_bounds, upper_bounds))
-    print(x_position[np.argmax(corr_coef)])
-    print(popt)
+    upper_bounds = (np.max(corr_coef), 24, 12)
+    popt, _ = curve_fit(gaussian, x_position, corr_coef, p0=[np.max(corr_coef), x_position[np.argmax(corr_coef)], 1], bounds=(lower_bounds, upper_bounds))
+
     FWHM = 2 * np.sqrt(2 * np.log(2)) * popt[2]
 
     maximum_correlation = max(corr_coef)
@@ -151,14 +158,14 @@ def calculate_metrics(correlation_coefficients):
     baseline = np.mean(noise)
     contrast = maximum_correlation - baseline
 
-    plt.plot(x_position, corr_coef, 'o', label='Correlation Coefficients')
-    plt.plot(np.linspace(0, 24, 1000), gaussian(np.linspace(0, 24, 1000), *popt), label='Fitted Gaussian Curve')
-    plt.xlabel('Position on the piano keyboard [cm]')
-    plt.ylabel('Correlation Coefficient')
-    #plt.title('Fitted parameters: amplitude = %.2f, mu = %.2f, sigma = %.2f, offset = %.2f' % tuple(popt))
-    plt.legend()
-    plt.grid()
-    plt.show()
+    # plt.plot(x_position, corr_coef, 'o', label='Correlation Coefficients')
+    # plt.plot(np.linspace(0, 24, 1000), gaussian(np.linspace(0, 24, 1000), *popt), label='Fitted Gaussian Curve')
+    # plt.xlabel('Position on the piano keyboard [cm]')
+    # plt.ylabel('Correlation Coefficient')
+    # #plt.title('Fitted parameters: amplitude = %.2f, mu = %.2f, sigma = %.2f, offset = %.2f' % tuple(popt))
+    # plt.legend()
+    # plt.grid()
+    # plt.show()
 
     return FWHM, contrast
 
@@ -167,13 +174,25 @@ def main_procedure(correlation_bank, signals):
     contrast_list = []
 
     for signal_name in signals:
+        print(f'Correlate {signal_name} to the bank')
         signal = signals[signal_name]
         correlation_coefficients, is_good_note = correlate_signal_to_bank(signal, signal_name, correlation_bank)
         if is_good_note:
-            FWHM, contrast = calculate_metrics(correlation_coefficients)
-            resolution_list.append(FWHM)
-            contrast_list.append(contrast)
-        
+            x = list(correlation_coefficients.keys())
+            y = list(correlation_coefficients.values())
+
+            # print('en x', np.any(np.isnan(x)) or np.any(np.isnan(x)))
+            # print('en y',  np.any(np.isnan(y)) or np.any(np.isnan(y)))
+            try:
+                FWHM, contrast = calculate_metrics(correlation_coefficients)
+                resolution_list.append(FWHM)
+                contrast_list.append(contrast)
+            except:
+                print('error in calculate_metrics')
+    
+    print('resolution_list length:', len(resolution_list))
+    print('contrast_list length:', len(contrast_list))
+
     mean_resolution = np.mean(resolution_list)
     mean_contrast = np.mean(contrast_list)
 
@@ -196,20 +215,31 @@ def convert_to_bits(signal, num_bits):
     Returns:
     - signal_bits: The signal converted to the specified number of bits
     """
-    # Define the range for the bit depth
-    max_value = 2**(num_bits - 1) - 1  # Max value for signed integer
-    min_value = -2**(num_bits - 1)     # Min value for signed integer
+    """
+    Encode a 1D signal into a certain number of bits.
+
+    Parameters:
+    - signal: np.array, the input signal
+    - num_bits: int, the number of bits for quantization
+
+    Returns:
+    - quantized_signal: np.array, the quantized signal
+    """
+    # Calculate the number of quantization levels
+    num_levels = 2 ** num_bits
 
     # Normalize the signal to the range [0, 1]
-    signal_normalized = (signal - np.min(signal)) / (np.max(signal) - np.min(signal))
-    
-    # Scale and shift the normalized signal to fit the desired bit depth
-    signal_scaled = signal_normalized * (max_value - min_value) + min_value
-    
-    # Convert the scaled signal to the corresponding integer type
-    signal_bits = np.round(signal_scaled).astype(np.int16 if num_bits > 8 else np.int8)
+    min_val = np.min(signal)
+    max_val = np.max(signal)
+    normalized_signal = (signal - min_val) / (max_val - min_val)
 
-    return signal_bits
+    # Scale to the number of levels and quantize
+    quantized_signal = np.round(normalized_signal * (num_levels - 1))
+
+    # Convert to integer type
+    quantized_signal = quantized_signal.astype(int)
+
+    return quantized_signal
 
 def change_sampling_freq(data, factor):
     """
@@ -225,7 +255,7 @@ def change_sampling_freq(data, factor):
     - new_data: The signal with the new sampling frequency
     """
     new_data = data[::factor]
-    return new_data
+    return new_data[np.isfinite(new_data)]
 
 def low_pass_filter(signal, cutoff_freq, sampling_rate):
     """
@@ -258,12 +288,23 @@ def low_pass_filter(signal, cutoff_freq, sampling_rate):
     filtered_signal = np.fft.ifft(filtered_fft_signal)
     
     # Return the real part of the inverse FFT (since the signal is real-valued)
-    return np.real(filtered_signal)
-    
+    new_data = np.real(filtered_signal)
+
+    return new_data[np.isfinite(new_data)]
+
 if __name__ == "__main__":
     correlation_folder_path = 'correlation'
     correlation_bank = create_correlation_bank(correlation_folder_path)
-    signal = np.load(r'signal_test\E4_1\1.npy', allow_pickle=True)
-    correlation_coefficients, is_good_note = correlate_signal_to_bank(signal,"E4_1", correlation_bank)
+
+    #signals_downsampled = {signal_name: change_sampling_freq(signal, factor) for signal_name, signal in signals.items()}
+    correlation_bank_downsampled = {key: convert_to_bits(correlation, 32) for key, correlation in correlation_bank.items()}
+
+    signal = np.load(r'signal_test\D4_1\1.npy', allow_pickle=True)
+    signal_downsampled = convert_to_bits(signal, 32)
+
+    # check if the is nan of inf in the signal
+    print(np.any(np.isnan(signal_downsampled)) or np.any(np.isnan(signal_downsampled)))
+    
+    correlation_coefficients, is_good_note = correlate_signal_to_bank(signal_downsampled,"F4_1", correlation_bank_downsampled)
     print(is_good_note)
     calculate_metrics(correlation_coefficients)
