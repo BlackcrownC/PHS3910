@@ -104,8 +104,8 @@ clear sensor
 % Nx = 124;               
 % Ny = 60; 
 
-x = round(linspace(5,119,24));
-y = round(linspace(5,55,12));
+x = round(linspace(5,119,48));
+y = round(linspace(5,55,24));
 [X,Y] = meshgrid(x,y);
 sensorXGrid = reshape(X,[],1);
 sensorYGrid = reshape(Y,[],1);
@@ -158,13 +158,13 @@ sensor_data = kspaceFirstOrder2D(kgrid, medium, source, sensor,...
 
 %% Visulation des données de simulation
 figure;
-plot(kgrid.t_array*10^3, sensor_data/norm(sensor_data))
+plot(kgrid.t_array*10^3, sensor_data(4,:)/norm(sensor_data))
 xlabel('Temps [ms]')
 ylabel('Amplitude')
 title("Amplitude de l'onde mesuree au capteur")
 
 %% Formation du dictionnaire
-dic = flip(sensor_data,2); % retournement temporel
+dic = flip(sensor_data,1); % retournement temporel
 
 %% Simu avec la source du dictionnaire comme senseur et avec une source random
 % Define sensor
@@ -177,7 +177,7 @@ sensorY = sourceGrid(2);     % [gridPoint]
 sensor.mask = [kgrid.x_vec(sensorX)'; kgrid.y_vec(sensorY)'];
 
 % Random source definition
-randSourceGrid = [95, 34]; 
+randSourceGrid = [70, 14]; 
 source_radius = floor(0.01/dx);         % [grid points] (Taille d'un doigt)
 source_magnitude = 10;                  % [Pa]
 source_1 = source_magnitude*makeDisc(Nx, Ny, randSourceGrid(1), randSourceGrid(2), source_radius);
@@ -207,11 +207,19 @@ sensor_data = kspaceFirstOrder2D(kgrid, medium, source, sensor,...
 %% Correlation map
 corr = zeros(1,length(sensorXGrid));
 for i = 1:length(sensorXGrid)
-    corr(i) = max(xcorr(sensor_data,dic(i,:),'normalized'));
+    corr(i) = max(xcorr(sensor_data/norm(sensor_data),dic(i,:)/norm(dic(i,:))));
+    %corr(i) = max(xcorr(sensor_data,dic(i,:),'coeff'));
 end
-corr_mat = reshape(corr,size(X,2),size(X,1)); %DROLE DE METHODE MONOME
+corr_mat = reshape(corr,size(X,1),size(X,2));
+corr_mat = flip(flip(corr_mat',2),1);
+
+sensor_x_pos = kgrid.x_vec(x);         % [grid points]
+sensor_y_pos = kgrid.y_vec(y);         % [grid points]
+
 figure;
-imagesc(corr_mat); axis image; colormap('gray');
+imagesc(sensor_y_pos*1e3,sensor_x_pos*1e3,corr_mat); axis image; colormap('gray');
+xlabel('x pos (mm)')
+ylabel('y pos (mm)')
 c = colorbar;
 c.Label.String = 'Correlation';
 %% Sauvegarde des données
