@@ -60,7 +60,7 @@ class CameraController:
         if 'sdk' in locals():
             self.sdk.dispose()
 
-    def capture(self, output_path: str = "test.tiff"):
+    def capture(self, output_path: str = "test"):
         self.camera.arm(2)  # Préparez la caméra avec 2 tampons
         print("Caméra armée et prête pour capturer des images.")
 
@@ -77,7 +77,7 @@ class CameraController:
             cv2.waitKey(0)  # Attendez une touche pour fermer la fenêtre
 
             # Enregistrer l'image en format TIFF
-            cv2.imwrite(output_path, image)
+            cv2.imwrite(f"{output_path}.tiff", image)
             print(f"Image enregistrée sous : {output_path}")
         else:
             print("Aucune image capturée.")
@@ -86,7 +86,7 @@ class CameraController:
         self.camera.disarm()
         print("Caméra désarmée et fermée.")
 
-    def record_video(self, nombre_image_par_seconde: int = 10, record_time: float = 1.0, output_path: str = "test.avi"):
+    def record_video(self, nombre_image_par_seconde: int = 10, record_time: float = 1.0, output_path: str = "test"):
         self.camera.arm(2)  # Préparez la caméra avec 2 tampons
         print("Caméra armée et prête pour capturer des images.")
 
@@ -94,7 +94,7 @@ class CameraController:
         frame_width = self.camera.image_width_pixels
         frame_height = self.camera.image_height_pixels
         fourcc = cv2.VideoWriter_fourcc(*'XVID')
-        out = cv2.VideoWriter(output_path, fourcc, nombre_image_par_seconde, (frame_width, frame_height), isColor=False)
+        out = cv2.VideoWriter(f"{output_path}.avi", fourcc, nombre_image_par_seconde, (frame_width, frame_height), isColor=False)
 
         for picture_number in range(int(nombre_image_par_seconde * record_time)):
             # Commencer à capturer des imagesc
@@ -126,4 +126,4 @@ class CameraController:
 
 with CameraController() as camera_controller:
     # camera_controller.capture()
-    camera_controller.record_video(10, 3, "test.avi")
+    camera_controller.record_video(10, 3, "test")
