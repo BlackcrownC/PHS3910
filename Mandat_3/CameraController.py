@@ -125,5 +125,5 @@ class CameraController:
 
 
 with CameraController() as camera_controller:
-    # camera_controller.capture()
-    camera_controller.record_video(10, 3, "test")
+    camera_controller.capture()
+    camera_controller.record_video(10, 10, "test")
