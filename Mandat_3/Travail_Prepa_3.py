@@ -90,9 +90,9 @@ for i in range(len(time_groups)-1):
     plt.legend()
 
     # Save the plot as an image
-    plt.savefig(f'frame_{i + 1}.png')
+    #plt.savefig(f'frame_{i + 1}.png')
     images.append(Image.open(f'frame_{i + 1}.png'))
-    plt.close()
+    #plt.close()
 
 # Save images as multipage TIFF
 images[0].save('particle_movement_gaussian_fit.tiff', save_all=True, append_images=images[1:], format='TIFF')
