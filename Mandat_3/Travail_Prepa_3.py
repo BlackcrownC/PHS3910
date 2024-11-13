@@ -112,3 +112,37 @@ plt.title(f"Trajectory of Emitter in X-Y Plane (D = {D} μm²/s)")
 plt.colorbar(cm.ScalarMappable(norm=norm, cmap='viridis'), label="Time (s)")
 plt.grid()
 plt.show()
+
+time_lags = [1,2,3,4,5]
+av_sdx = np.zeros(len(time_lags))
+av_sdy = np.zeros(len(time_lags))
+
+for i, tau in enumerate(time_lags):
+    sdx = []
+    sdy = []
+    
+    # Loop over each starting point in the data array for the given lag
+    for j in range(len(x_loc) - tau):
+        dx = x_loc[j + tau] - x_loc[j]
+        dy = y_loc[j + tau] - y_loc[j]
+        sdx.append(dx ** 2)
+        sdy.append(dy ** 2)
+        
+    av_sdx[i] = np.mean(sdx)
+    av_sdy[i] = np.mean(sdy)
+
+def line(x,m,b):
+    return m*np.array(x) + b
+
+# I use the average of the x and y squared displacements for the curve fit
+av_sd = (av_sdx + av_sdy)/2
+popt, pcov = curve_fit(line,time_lags,av_sd)
+fitted_line = line(time_lags,*popt)
+c = popt[0]/D
+
+kb = 1.38e-23 # J/K
+r = 3e-9 # m
+T = 20 + 273 # K
+n = 1.0016 # Viscosity of water at 20 degres
+D = (kb*T)/(6*np.pi*n*r)
+print(f"D = {D*1e12} um^2/s")
