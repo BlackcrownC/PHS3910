@@ -98,6 +98,7 @@ for i in range(len(time_groups)-1):
     images.append(buf)
     plt.close()
 time_center = (time_groups[:-1] + time_groups[1:]) / 2
+print(time_center)
 # Save images as multipage TIFF
 images = [Image.open(buf) for buf in images]
 images[0].save('particle_movement_gaussian_fit.tiff', save_all=True, append_images=images[1:], format='TIFF')
