@@ -7,6 +7,7 @@ from scipy.signal import find_peaks
 from scipy.optimize import curve_fit
 from PIL import Image
 import matplotlib.cm as cm
+import io
 
 poisson_mean = 20000
 
@@ -15,7 +16,7 @@ D = 1 #(um^2/s)
 number_of_photons = np.random.poisson(poisson_mean,size=1)
 photon_list = np.arange(0,number_of_photons,1) + 1
 emission_time = np.sort(np.random.uniform(0,1,number_of_photons))
-time_between_emissions = np.diff(emission_time) 
+time_between_emissions = np.diff(emission_time)
 
 sigma = np.sqrt(2*D*time_between_emissions)
 mu = 0
@@ -91,11 +92,14 @@ for i in range(len(time_groups)-1):
     plt.legend()
 
     # Save the plot as an image
-    plt.savefig(f'frame_{i + 1}.png')
-    images.append(Image.open(f'frame_{i + 1}.png'))
+    buf = io.BytesIO()
+    plt.savefig(buf, format='png')
+    buf.seek(0)
+    images.append(buf)
     plt.close()
 
 # Save images as multipage TIFF
+images = [Image.open(buf) for buf in images]
 images[0].save('particle_movement_gaussian_fit.tiff', save_all=True, append_images=images[1:], format='TIFF')
 print("Multipage TIFF file saved as 'particle_movement_gaussian_fit.tiff'")
 
