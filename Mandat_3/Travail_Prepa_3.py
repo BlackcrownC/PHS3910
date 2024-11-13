@@ -34,7 +34,7 @@ sigma_photons = 0.1 # (um)
 x_psf = x_diff+np.random.normal(loc=0,scale=sigma_photons,size=len(x_diff))
 y_psf = y_diff+np.random.normal(0,sigma_photons,len(y_diff))
 
-num_frames = 50
+num_frames = 5
 time_groups = 0.1*np.linspace(0,10,num_frames+1)
 binsize = 0.1 # (um)
 x_range = (x_psf.min(), x_psf.max())
@@ -68,7 +68,7 @@ x_loc = np.zeros(len(time_groups)-1)
 y_loc = np.zeros(len(time_groups)-1)
 av_x = np.zeros(len(time_groups)-1)
 av_y = np.zeros(len(time_groups)-1)
-
+print(time_groups)
 images = []
 for i in range(len(time_groups)-1):
     index = np.where((time_groups[i] <= t)&(t < time_groups[i+1]))[0]
@@ -97,15 +97,15 @@ for i in range(len(time_groups)-1):
     buf.seek(0)
     images.append(buf)
     plt.close()
-
+time_center = (time_groups[:-1] + time_groups[1:]) / 2
 # Save images as multipage TIFF
 images = [Image.open(buf) for buf in images]
 images[0].save('particle_movement_gaussian_fit.tiff', save_all=True, append_images=images[1:], format='TIFF')
 print("Multipage TIFF file saved as 'particle_movement_gaussian_fit.tiff'")
 
 plt.figure(figsize=(8, 8))
-norm = plt.Normalize(time_groups.min(), time_groups.max())
-colors = cm.viridis(norm(time_groups))  # Color according to time
+norm = plt.Normalize(time_center.min(), time_center.max())
+colors = cm.viridis(norm(time_center))  # Color according to time
 
 for i in range(len(x_loc) - 1):
     plt.plot(x_loc[i:i+2], y_loc[i:i+2], color=colors[i])
@@ -142,11 +142,15 @@ def line(x,m,b):
 av_sd = (av_sdx + av_sdy)/2
 popt, pcov = curve_fit(line,time_lags,av_sd)
 fitted_line = line(time_lags,*popt)
-c = popt[0]/D
+D = popt[1]/4
 
-kb = 1.38e-23 # J/K
-r = 3e-9 # m
-T = 20 + 273 # K
-n = 1.0016 # Viscosity of water at 20 degres
-D = (kb*T)/(6*np.pi*n*r)
-print(f"D = {D*1e12} um^2/s")
+plt.scatter(time_lags, av_sd, label='Average squared displacements x and y',color='g')
+plt.plot(time_lags,fitted_line, label='Fitted linear model',color='orange')
+plt.scatter(time_lags, av_sdx, label='Average sdx', color='b')
+plt.scatter(time_lags, av_sdy, label='Average sdy', color='r')
+plt.xlabel('Time lags')
+plt.ylabel('Average squared displacement (um^2)')
+plt.legend()
+plt.grid(True)
+plt.show()
+print(f"Fitted values : m = {round(popt[0],4)}, b = {round(popt[1],4)}.")
