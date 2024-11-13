@@ -6,6 +6,7 @@ from scipy.special import jn
 from scipy.signal import find_peaks
 from scipy.optimize import curve_fit
 from PIL import Image
+import matplotlib.cm as cm
 
 poisson_mean = 20000
 
@@ -90,10 +91,24 @@ for i in range(len(time_groups)-1):
     plt.legend()
 
     # Save the plot as an image
-    #plt.savefig(f'frame_{i + 1}.png')
+    plt.savefig(f'frame_{i + 1}.png')
     images.append(Image.open(f'frame_{i + 1}.png'))
-    #plt.close()
+    plt.close()
 
 # Save images as multipage TIFF
 images[0].save('particle_movement_gaussian_fit.tiff', save_all=True, append_images=images[1:], format='TIFF')
 print("Multipage TIFF file saved as 'particle_movement_gaussian_fit.tiff'")
+
+plt.figure(figsize=(8, 8))
+norm = plt.Normalize(time_groups.min(), time_groups.max())
+colors = cm.viridis(norm(time_groups))  # Color according to time
+
+for i in range(len(x_loc) - 1):
+    plt.plot(x_loc[i:i+2], y_loc[i:i+2], color=colors[i])
+
+plt.xlabel("X Position (μm)")
+plt.ylabel("Y Position (μm)")
+plt.title(f"Trajectory of Emitter in X-Y Plane (D = {D} μm²/s)")
+plt.colorbar(cm.ScalarMappable(norm=norm, cmap='viridis'), label="Time (s)")
+plt.grid()
+plt.show()
