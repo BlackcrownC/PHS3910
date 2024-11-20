@@ -120,15 +120,16 @@ class CameraController:
         self.camera.disarm()
         print("Caméra désarmée et fermée.")
 
-    def get_image(self, filename: str = "test", is_video: bool = False):
-        if is_video:
-            image = cv2.VideoCapture(f"{filename}.{self.vid_ext}")
-            return image
-        image = cv2.imreadmulti(f"{filename}.{self.img_ext}", flags=cv2.IMREAD_LOAD_GDAL)[1]
-        image = np.float32(np.array(image))
+    def get_image(self, filename: str = "test"):
+        image = cv2.VideoCapture(f"{filename}.{self.vid_ext}")
         return image
 
 
 with CameraController() as camera_controller:
     # camera_controller.capture()
-    camera_controller.record_video(10, 10, "test")
+    camera_controller.record_video(10, 10, "test3")
+
+# video_to_start have an fps of 33
+# test videos are 10 fps
+# video_to_start have an exposure time of 30 ms
+# test videos have an exposure time of 30 ms
