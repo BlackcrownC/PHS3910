@@ -32,6 +32,15 @@ def video_to_3d_array(video_path):
     return video_array[:,:,:,0]
 
 # Example usage
-video_path = "video_to_start_coding_early.avi"  # Replace with your video file path
+video_path = "video_to_start_coding_2.avi"  # Replace with your video file path
 video_array = video_to_3d_array(video_path)
 print("Video shape:", video_array.shape)  # Output: (frames, height, width, channels)
+
+
+
+# Exemple using localization
+from Loc_func import super_locs
+
+image = video_array[0,:,:]
+
+x, y = super_locs(image,250,50,plot=True)
