@@ -119,7 +119,7 @@ av_x = np.zeros(len(time_groups)-1)
 av_y = np.zeros(len(time_groups)-1)
 
 images = []
-M = 150 # Microscope magnification
+M = 1000 # Microscope magnification
 effective_pixel_size = 3.45 / M  # Effective pixel size in um
 camera_width = 1440
 camera_height = 1080
@@ -127,7 +127,7 @@ x_psf_scaled = (x_psf / effective_pixel_size)+(1440//2)
 y_psf_scaled = (y_psf / effective_pixel_size)+(1080//2)
 
 # Adjusted loop for generating frames
-for i in range(50) :
+for i in range(1) :
     index = np.where((time_groups[i] <= t) & (t < time_groups[i + 1]))[0]
     hist, xedges, yedges = np.histogram2d(
         x_psf_scaled[index], y_psf_scaled[index], bins=(int(1440), int(1080)),
@@ -145,7 +145,9 @@ for i in range(50) :
     print(x_loc[i], x_loc_2[i])
     # Visualization of the current frame
     plt.figure()
-    plt.imshow(hist.T, extent=(0,1440,0,1080), origin='lower', cmap='viridis', norm=None, vmin=0, vmax=hist.max())
+    plt.imshow(hist.T, extent=(0,1440,0,1080) , origin='lower', cmap='viridis', norm=None, vmin=0, vmax=hist.max())
+    plt.xlim(600,800)
+    plt.ylim(450,650)
     plt.colorbar(label='Photon Count')
     plt.scatter(params[1], params[2], color='red', label=f'Centre : {int(params[1])} , {int(params[2])}', s=2, zorder=5)
     #print([params[1], params[2]])
