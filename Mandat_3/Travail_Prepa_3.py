@@ -133,7 +133,7 @@ for r_idx, r in enumerate(var_r):
         print(x_loc)
         time_center = (time_groups[:-1] + time_groups[1:]) / 2
 
-        time_lags = np.array([1,2])
+        time_lags = np.array([1,2,3,4,5])
         av_sdx = np.zeros(len(time_lags))
         av_sdy = np.zeros(len(time_lags))
         av_sd = np.zeros(len(time_lags))
