@@ -101,10 +101,6 @@ for r_idx, r in enumerate(var_r):
         y_loc = np.zeros(len(time_groups) - 1)
         av_x = np.zeros(len(time_groups) - 1)
         av_y = np.zeros(len(time_groups) - 1)
-        # x_loc = np.zeros(range(1))
-        # y_loc = np.zeros(range(1))
-        # av_x = np.zeros(range(1))
-        # av_y = np.zeros(range(1))
 
         print(f'Grossissement : {M}')
         for frame in range(num_frames):
@@ -176,7 +172,7 @@ for r_idx, r in enumerate(var_r):
         # print(y_err)
         # errors[r_idx, m_idx] = np.sqrt(x_err**2 + y_err**2).mean()
 
-#print(r_diff)
+# print(r_diff)
 # print(errors)
 
 # Plot results
