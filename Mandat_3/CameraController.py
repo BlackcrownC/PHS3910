@@ -128,7 +128,7 @@ class CameraController:
 
 with CameraController() as camera_controller:
     # camera_controller.capture()
-    camera_controller.record_video(10, 10, "test3")
+    camera_controller.record_video(10, 10, "test_norm")
 
 # video_to_start have an fps of 33
 # test videos are 10 fps
