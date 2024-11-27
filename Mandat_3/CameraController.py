@@ -112,6 +112,7 @@ class CameraController:
 
                 # Enregistrer l'image en format video
                 image = np.array(frame.image_buffer, dtype=np.uint8).reshape((frame_height, frame_width))
+                image = cv2.normalize(image, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX)
                 out.write(image)
             else:
                 print("Unable to acquire image, program exiting...")
